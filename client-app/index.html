@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLT Client UI</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1>Property Transfer</h1>
+                <button class="btn btn-info" onclick="initializeLedger()" id="initialize-ledger-btn">Initialize Ledger</button>
+                <button class="btn btn-info" onclick="getAllProperties()" id="get-all-properties-btn">Get All Properties</button>
+                <button class="btn btn-info" onclick="createNewPropertyForm()">Create New Property</button>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Owner</th>
+                            <th scope="col">Latitude</th>
+                            <th scope="col">Longitude</th>
+                            <th scope="col">Purchase Date</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="properties_list">
+                        <!-- will be filled from AJAX API -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="property_details" tabindex="-1" aria-labelledby="property_details_label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="property_details_label">New Property</h5>
+                    <button type="button" class="close" onclick="$('#property_details').modal('hide');">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="property_details">
+                        <div class="mb-3">
+                            <label for="property_id" class="form-label">ID:</label>
+                            <input type="text" class="form-control" id="property_id" name="property_id" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="owner" class="form-label">Owner:</label>
+                            <select name="owner" id="owner" class="form-control" required>
+                                <option value="" selected disabled>Select Owner</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="latitude" class="form-label">Latitude:</label>
+                            <input type="text" class="form-control" id="latitude" name="latitude" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="longitude" class="form-label">Longitude:</label>
+                            <input type="text" class="form-control" id="longitude" name="longitude" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="purchase_date" class="form-label">Purchase Date:</label>
+                            <input type="text" class="form-control" id="purchase_date" name="purchase_date" required>
+                        </div>
+                        <input type="submit" id="property_details_submit" style="display: none;">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="$('#property_details').modal('hide');">Close</button>
+                    <button type="button" class="btn btn-primary" id="modal-submit-btn" onclick="$('#property_details_submit').trigger('click')">Create Property</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="property_transfer" tabindex="-1" aria-labelledby="property_transfer_label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Transfer Property</h5>
+                    <button type="button" class="close" onclick="$('#property_transfer').modal('hide');">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form onsubmit="transferProperty()" id="property_transfer_form">
+                        <div class="mb-3">
+                            <label for="property_transfer_id" class="form-label">ID:</label>
+                            <input type="text" class="form-control" id="property_transfer_id" name="property_transfer_id" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="oldowner" class="form-label">Actual Owner:</label>
+                            <select name="oldowner" id="oldowner" class="form-control" disabled></select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newowner" class="form-label">New Owner:</label>
+                            <select name="newowner" id="newowner" class="form-control" required>
+                                <option value="" selected disabled>Select Owner</option>
+                            </select>
+                        </div>
+                        <input type="submit" id="property_transfer_submit" style="display: none">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="$('#property_transfer').modal('hide');">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="$('#property_transfer_submit').trigger('click')">Transfer Property</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toasts" style="position: absolute; top: 0; right: 0;"></div>
+
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script>
+        var newProperty = null;
+        var users = [
+            {id: 'IBRCL', name: 'Carl'},
+            {id: 'JVNKL', name: 'John'},
+            {id: '82V4W', name: 'Elie'},
+            {id: 'PQ2HA', name: 'Joseph'},
+            {id: 'IBYXI', name: 'Alex'},
+            {id: 'IRXQD', name: 'Naomi'},
+            {id: 'DZFKS', name: 'Jennifer'},
+            {id: '1EE5Y', name: 'Alexa'},
+            {id: 'WBE0D', name: 'Caroline'},
+            {id: 'SWT83', name: 'Levi'}
+        ];
+        var properties = [];
+        var property_to_delete_id;
+        var updating = false;
+        var property_transfer_id;
+        var newowner;
+        var toast_id = 0;
+
+        $(document).ready(function(){
+            for(var i = 0; i < users.length; i++){
+                $("#owner").append('<option value="' + users[i].id + '">' + users[i].name + '</option>');
+                $("#oldowner").append('<option value="' + users[i].id + '">' + users[i].name + '</option>');
+                $("#newowner").append('<option value="' + users[i].id + '">' + users[i].name + '</option>');
+            }
+        });
+
+        function getUserName(id){
+            for(var i = 0; i < users.length; i++){
+                if(users[i].id == id){
+                    return users[i].name;
+                }
+            }
+        }
+        
+        function getProperty(id){
+            for(var i = 0; i < properties.length; i++){
+                if(properties[i].ID == id){
+                    return properties[i];
+                }
+            }
+        }
+
+        function getPropertyIndex(id){
+            for(var i = 0; i < properties.length; i++){
+                if(properties[i].ID == id){
+                    return i;
+                }
+            }
+        }
+
+        function initializeLedger(){
+                addToast('Initialize', 'Initialized Ledger');
+            callMethod('/initLedger', 'post', {}, (response) => {
+                console.log('ledged initialized');
+                $("#initialize-ledger-btn").prop("disabled", true);
+                addToast('Initialize', 'Ledger Initialized');
+                // setTimeout(() => {
+                //     getAllProperties();
+                // }, 5000);
+            });
+        }
+
+        function getAllProperties(){
+            addToast('Properties', 'Getting All Properties');
+            callMethod('/getAllProperties', 'GET', {}, (response) => {
+                if(response.status == 200){
+                    var responseJSON = JSON.parse(response.message);
+                    for(var i = 0; i < responseJSON.length; i++){
+                        addPropertyToTable(responseJSON[i]);
+                    }
+                    properties = responseJSON;
+                }
+                $("#get-all-properties-btn").prop("disabled", true);
+            });
+        }
+
+        function addPropertyToTable(property){
+            var propertyRow = '<tr id="property_' + property.ID + '">\n\
+                                    <th scope="row">' + property.ID + '</th>\n\
+                                    <td>' + getUserName(property.owner) + '</td>\n\
+                                    <td>' + property.latitude + '</td>\n\
+                                    <td>' + property.longitude + '</td>\n\
+                                    <td>' + property.purchase_date + '</td>\n\
+                                    <td>\n\
+                                        <button class="btn" onclick="updatePropertyForm(\'' + property.ID + '\')"><i class="fa fa-edit"></i></button>\n\
+                                        <button class="btn" onclick="transferPropertyForm(\'' + property.ID + '\')"><i class="fa fa-exchange"></i></button>\n\
+                                        <button class="btn" onclick="deletePropertyForm(\'' + property.ID + '\')"><i class="fa fa-trash"></i></button>\n\
+                                    </td>\n\
+                                </tr>';
+            $("#properties_list").append(propertyRow);
+        }
+
+        function updatePropertyRow(property){
+            var propertyRow = '<th scope="row">' + property.ID + '</th>\n\
+                                <td>' + getUserName(property.owner) + '</td>\n\
+                                <td>' + property.latitude + '</td>\n\
+                                <td>' + property.longitude + '</td>\n\
+                                <td>' + property.purchase_date + '</td>\n\
+                                <td>\n\
+                                    <button class="btn" onclick="updatePropertyForm(\'' + property.ID + '\')"><i class="fa fa-edit"></i></button>\n\
+                                    <button class="btn" onclick="transferPropertyForm(\'' + property.ID + '\')"><i class="fa fa-exchange"></i></button>\n\
+                                    <button class="btn" onclick="deletePropertyForm(\'' + property.ID + '\')"><i class="fa fa-trash"></i></button>\n\
+                                </td>';
+            $("#property_" + property.ID).html(propertyRow);
+        }
+
+        $("#property_details").on('submit', function(){
+            event.preventDefault();
+            if(updating){
+                updateProperty();
+            }else{
+                createProperty();
+            }
+        })
+        
+        function createProperty(){
+            newProperty = {
+                ID: $("#property_id").val(),
+                latitude: $("#latitude").val(),
+                longitude: $("#longitude").val(),
+                owner: $("#owner").val(),
+                purchase_date: $("#purchase_date").val()
+            };
+            addToast('New Property', 'Creating New Property');
+            callMethod('/createProperty', 'POST', newProperty, (response) => {
+                if(response.status == 200){
+                    addPropertyToTable(newProperty);
+                    properties.push(newProperty);
+                    addToast('New Property', 'New Property Created');
+                }else{
+                    handleJSONError('New Property Error', response);
+                }
+                $('#property_details').modal('hide');
+            });
+        }
+
+        function createNewPropertyForm(){
+            updating = false;
+            // change labels and onclick event
+            $("#property_details_label").html('Create Property');
+            $("#modal-submit-btn").html('Create Property');
+            // empty input values
+            $("#property_id").val('');
+            $("#latitude").val('');
+            $("#longitude").val('');
+            $("#owner").val('');
+            $("#purchase_date").val('');
+            $("#property_id").prop("disabled", false);
+            $("#owner").prop("disabled", false);
+            $('#property_details').modal('show');
+        }
+
+        function updatePropertyForm(property_id){
+            var property = getProperty(property_id);
+            updating = true;
+            // change labels and onclick event
+            $("#property_details_label").html('Update Property');
+            $("#modal-submit-btn").html('Update Property');;
+            // empty input values
+            $("#property_id").val(property.ID);
+            $("#property_id").prop("disabled", true);
+            $("#latitude").val(property.latitude);
+            $("#longitude").val(property.longitude);
+            $("#owner").val(property.owner);
+            $("#owner").prop("disabled", true);
+            $("#purchase_date").val(property.purchase_date);
+            $('#property_details').modal('show');
+        }
+        
+        function updateProperty(){
+            newProperty = {
+                ID: $("#property_id").val(),
+                latitude: $("#latitude").val(),
+                longitude: $("#longitude").val(),
+                owner: $("#owner").val(),
+                purchase_date: $("#purchase_date").val()
+            };
+            addToast('Update Property', 'Updating Property');
+            console.log('updating')
+            callMethod('/updateProperty', 'POST', newProperty, (response) => {
+                if(response.status == 200){
+                    var property_i = getPropertyIndex(newProperty.ID);
+                    properties[property_i] = newProperty;
+                    updatePropertyRow(newProperty);
+                    addToast('Update Property', 'Property Updated');
+                    console.log('updated');
+                }else{
+                    handleJSONError('Update Property Error', response);
+                }
+                $('#property_details').modal('hide');
+            });
+        }
+
+        function deletePropertyForm(property_id){
+            property_to_delete_id = property_id;
+            addToast('Delete Property', 'Deleting Property');
+            callMethod('/deleteProperty', 'POST', {ID: property_id}, (response) => {
+                if(response.status == 200){
+                    $("#property_" + property_to_delete_id).remove();
+                    property_to_delete_id = null;
+                    addToast('Delete Property', 'Property Deleted');
+                }else{
+                    handleJSONError('Delete Property Error', response);
+                }
+            })
+        }
+
+        function transferPropertyForm(property_id){
+            property_transfer_id = property_id;
+            var property = getProperty(property_id);
+            $("#property_transfer_id").val(property.ID);
+            $("#oldowner").val(property.owner);
+            $("#newowner").val('');
+            $("#property_transfer").modal('show');
+        }
+
+        function transferProperty(){
+            event.preventDefault();
+            newowner = $("#newowner").val();
+            addToast('Property Transfer', 'Transfering Property');
+            callMethod('/changePropertyOwner', 'POST', {ID: property_transfer_id, newowner: newowner}, (response) => {
+                if(response.status == 200){
+                    var property_i = getPropertyIndex(property_transfer_id);
+                    properties[property_i].owner = newowner;
+                    updatePropertyRow(properties[property_i]);
+                    addToast('Property Transfer', 'Property Transfered');
+                }else{
+                    handleJSONError('Property Transfer Error', response);
+                }
+                $("#property_transfer").modal('hide');
+            })
+        }
+
+        function callMethod(url, method, parameters, successCallback) {
+            //show loading... image
+
+            $.ajax({
+                type: method,
+                url: url,
+                data: JSON.stringify(parameters),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: successCallback,
+                error: function(error) {
+                    console.log('error');
+                    console.log(error);
+                    addToast('Error', error);
+                }
+            });
+        }
+    
+        function addToast(title, message, error){
+            toast_id++;
+            var toast = '<div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000" id="toast_' + toast_id + '">\n\
+                            <div class="toast-header">';
+            if(error){
+                toast += '<i class="fa fa-exclamation-triangle" style="color:red"></i> &nbsp; &nbsp;';
+            }else{
+                toast += '<i class="fa fa-info-circle" style="color:blue"></i> &nbsp; &nbsp;';
+            }
+            toast += '<strong class="mr-auto">' + title + '</strong>\n\
+                                <small class="text-muted">&nbsp;&nbsp;just now</small>\n\
+                                <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">\n\
+                                    <span aria-hidden="true">&times;</span>\n\
+                                </button>\n\
+                            </div>\n\
+                            <div class="toast-body">' + message + '</div>\n\
+                        </div>';
+            $("#toasts").append(toast);
+            $("#toast_" + toast_id).toast('show');
+        }
+
+        function handleJSONError(title, message){
+            // we receive 2 response, each from an organization
+            addToast(title, message.message.responses[0].response.message.split('Error: ')[1], true);
+        }
+    </script>
+</body>
+</html>

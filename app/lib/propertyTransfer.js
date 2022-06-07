@@ -10,46 +10,46 @@ class PropertyTransfer extends Contract {
         const properties = [
             {
                 ID: 'property1',
-                lattitude: '33.898290',
+                latitude: '33.898290',
                 longitude: '35.643253',
                 owner: 'IBRCL',
                 purchase_date: '2020-01-02 14:20:00'
             },
             {
                 ID: 'property2',
-                lattitude: '32.240480', 
+                latitude: '32.240480', 
                 longitude: '42.436585',
                 owner: 'JVNKL',
                 purchase_date: '2020-01-02 14:20:00'
             },
             {
                 ID: 'property3',
-                lattitude: '39.987305',
+                latitude: '39.987305',
                 longitude: '34.808560',
                 owner: '82V4W',
                 purchase_date: '2020-01-02 14:20:00'
             },
             {
                 ID: 'property4',
-                lattitude: '57.191616',
+                latitude: '57.191616',
                 longitude: '104.941213',
                 owner: 'IBYXI',
                 purchase_date: '2020-01-02 14:20:00'
             },
             {
                 ID: 'property5',
-                lattitude: '-7.845575',
+                latitude: '-7.845575',
                 longitude: '-49.045891',
                 owner: 'IRXQD',
                 purchase_date: '2020-01-02 14:20:00'
             },
             {
                 ID: 'property6',
-                lattitude: '-25.921426',
+                latitude: '-25.921426',
                 longitude: '24.778973',
                 owner: 'DZFKS',
                 purchase_date: '2020-01-02 14:20:00'
-            },
+            }
         ];
 
         for (const property of properties) {
@@ -58,7 +58,7 @@ class PropertyTransfer extends Contract {
         }
     }
 
-    async CreateProperty(ctx, id, lattitude, longitude, owner, purchase_date) {
+    async CreateProperty(ctx, id, latitude, longitude, owner, purchase_date) {
         const exists = await this.PropertyExists(ctx, id);
         if (exists) {
             throw new Error(`The property ${id} already exists`);
@@ -66,7 +66,7 @@ class PropertyTransfer extends Contract {
 
         const property = {
             ID: id,
-            lattitude: lattitude,
+            latitude: latitude,
             longitude: longitude,
             owner: owner,
             purchase_date: purchase_date
@@ -117,7 +117,7 @@ class PropertyTransfer extends Contract {
         return propertyJSON.toString();
     }
 
-    async UpdateProperty(ctx, id, lattitude, longitude, purchase_date) {
+    async UpdateProperty(ctx, id, latitude, longitude, purchase_date) {
         const exists = await this.PropertyExists(ctx, id);
         if (!exists) {
             throw new Error(`The property ${id} does not exist`);
@@ -130,7 +130,7 @@ class PropertyTransfer extends Contract {
         // overwriting original property with new property
         const updatedProperty = {
             ID: id,
-            lattitude: lattitude,
+            latitude: latitude,
             longitude: longitude,
             owner: oldProperty.owner,
             purchase_date: purchase_date,
