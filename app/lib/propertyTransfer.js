@@ -79,6 +79,11 @@ class PropertyTransfer extends Contract {
     async GetOwnerTaxPayments(ctx, owner){
         
         let response = await ctx.stub.invokeChaincode('tax-oracle', ['CallFinanceTaxDepartment', owner]);
+        let encryptedResponse = await ctx.stub.invokeChaincode('tax-oracle-encrypted', ['CallFinanceTaxDepartment', owner]);
+
+        if(!this.OracleResponseMatch(encryptedResponse, response)){
+            throw new Error('Response mismatch between oracles');
+        }
         
         let jsonResp = response.payload.toString();
         console.log('logging from contract');
@@ -107,6 +112,11 @@ class PropertyTransfer extends Contract {
         // return Buffer.from(stringify(sortKeysRecursive(response.payload.data)));
         // first attempt response
         // {"status":200,"payload":{"type":"Buffer","data":[123,34,109,101,115,115,97,103,101,34,58,34,104,101,108,108,111,32,102,114,111,109,32,65,80,73,34,125]}}
+    }
+
+    async OracleResponseMatch(ctx, encryptedResponse, nonEncryptedResponse){
+        let decryptedResponse = await ctx.stub.invokeChaincode('decryptor', ['decryptMessage', encryptedResponse]);
+        return decryptedResponse == nonEncryptedResponse;
     }
 
     async ReadProperty(ctx, id) {

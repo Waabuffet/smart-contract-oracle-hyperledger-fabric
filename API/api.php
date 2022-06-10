@@ -2,8 +2,8 @@
 $user_id_received = false;
 $response = array();
 
-if(isset($_GET['user_id'])){
-    if($_GET['user_id'] != ''){
+if(isset($_GET['user_id']) && isset($_GET['encrypted'])){
+    if($_GET['user_id'] != '' && $_GET['encrypted'] != ''){
         $user_id_received = true;
         
         class User{
@@ -45,17 +45,34 @@ if(isset($_GET['user_id'])){
             return null;
         }
 
+        function encryptResult($message){
+            $method = "AES-256-CBC";
+            $secret = "My32charPasswordAndInitVectorStr";  //must be 32 char length
+            return encryptWithTimeStampValidation($message, $method, $secret);
+        }
+
+        function encrypt($message, $method, $secret) {
+            $iv = substr($secret, 0, 16);
+            return base64_encode($iv) . openssl_encrypt($message, $method, $secret, 0, $iv);
+        }
+
+        function encryptWithTimeStampValidation($message, $method, $secret) {
+            date_default_timezone_set('UTC');
+            $message = substr(date('c'),0,19) . "$message";
+            return encrypt($message, $method, $secret);
+        }        
+
         $user = getUser($_GET['user_id']);
 
         if(!is_null($user)){
             $response = array(
                 'status' => 200,
-                'user_tax_payment' => $user->getTaxPayment()
+                'user_tax_payment' => ($_GET['encrypted'] == 1)? encryptResult($user->getTaxPayment()) : $user->getTaxPayment()
             );
         }else{
             $response = array(
                 'status' => 400,
-                'message' => 'User not found'
+                'message' => ($_GET['encrypted'] == 1)? encryptResult('User not found') : 'User not found'
             );
         }
         
@@ -72,7 +89,7 @@ if(isset($_GET['user_id'])){
 if(!$user_id_received){ // will never be reached
     $response = array(
         'status' => '400',
-        'message' => 'user_id required'
+        'message' => 'user_id and encrypted are required parameters'
     );
 }
 echo json_encode($response);

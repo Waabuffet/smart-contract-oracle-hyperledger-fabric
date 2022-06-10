@@ -38,7 +38,7 @@ app.post('/initLedger', async (req, res) => {
 	console.log('Initializing ledger with properties');
 
 	try {
-		let result = null; //await contract.submitTransaction('InitLedger');
+		let result = await contract.submitTransaction('InitLedger');
 		res.json({
 			status: 200,
 			message: result

@@ -176,7 +176,7 @@
         }
 
         function initializeLedger(){
-                addToast('Initialize', 'Initialized Ledger');
+                addToast('Initialize', 'Initializing Ledger');
             callMethod('/initLedger', 'post', {}, (response) => {
                 console.log('ledged initialized');
                 $("#initialize-ledger-btn").prop("disabled", true);
@@ -190,6 +190,7 @@
         function getAllProperties(){
             addToast('Properties', 'Getting All Properties');
             callMethod('/getAllProperties', 'GET', {}, (response) => {
+                console.log(response)
                 if(response.status == 200){
                     var responseJSON = JSON.parse(response.message);
                     for(var i = 0; i < responseJSON.length; i++){
