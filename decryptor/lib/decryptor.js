@@ -27,6 +27,8 @@ class Decryptor extends Contract {
         var msgDate = new Date(Date.UTC(year, month, day, hour, minute, second))
         if (Math.round((now - msgDate) / 1000) <= intervalThreshold) {
             return decrypted.substr(19);
+        }else{
+            throw new Error('Encrypted message is too old or has been tampered with');
         }
     }
 }
