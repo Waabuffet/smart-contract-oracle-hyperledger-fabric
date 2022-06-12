@@ -9,7 +9,7 @@ class TaxOracle extends Contract {
 
   async CallFinanceTaxDepartment(ctx, owner){
       //since this is calling from a docker container, we need to reach the host IP where the API server is listening (host.docker.internal)
-      var response = await this.GetRequest('http://host.docker.internal:8080/didOwnerPayTax.php?user_id=' + owner + "&encrypted=0");
+      var response = await this.GetRequest('http://host.docker.internal:8080/didOwnerPayTax.php?encrypted=false&user_id=' + owner);
 
       //* save value in the blockchain
       await this.AddUserTaxValue(ctx, owner, response.user_tax_payment);
@@ -52,7 +52,7 @@ class TaxOracle extends Contract {
   async AddUserTaxValue(ctx, id, taxPayment) {
     const exists = await this.UserExists(ctx, id);
     if (exists) {
-        this.updatedUser(ctx, id, taxPayment);
+        this.UpdateUser(ctx, id, taxPayment);
     }else{
       const user = {
           ID: id,

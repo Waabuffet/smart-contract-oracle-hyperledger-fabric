@@ -6,7 +6,7 @@
 
 'use strict';
 
-const decryptor = require('./lib/decruptor');
+const decryptor = require('./lib/decryptor');
 
 module.exports.Decryptor = decryptor;
 module.exports.contracts = [decryptor];

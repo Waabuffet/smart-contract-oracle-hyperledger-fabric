@@ -81,13 +81,18 @@ class PropertyTransfer extends Contract {
         let response = await ctx.stub.invokeChaincode('tax-oracle', ['CallFinanceTaxDepartment', owner]);
         let encryptedResponse = await ctx.stub.invokeChaincode('tax-oracle-encrypted', ['CallFinanceTaxDepartment', owner]);
 
-        if(!this.OracleResponseMatch(encryptedResponse, response)){
+        let jsonResp = response.payload.toString();
+        let encryptedJsonResp = encryptedResponse.payload.toString();
+        console.log('got responses from oracles. non encrypted:')
+        console.log(jsonResp);
+        console.log('encrypted:');
+        console.log(encryptedJsonResp);
+        if(!this.OracleResponseMatch(ctx, encryptedJsonResp, jsonResp)){
             throw new Error('Response mismatch between oracles');
         }
         
-        let jsonResp = response.payload.toString();
-        console.log('logging from contract');
-        console.log(jsonResp);
+        // console.log('logging from contract');
+        // console.log(jsonResp);
         // console.log(typeof jsonResp);
         return jsonResp; //already a string
         // console.log('================================');
@@ -115,8 +120,11 @@ class PropertyTransfer extends Contract {
     }
 
     async OracleResponseMatch(ctx, encryptedResponse, nonEncryptedResponse){
-        let decryptedResponse = await ctx.stub.invokeChaincode('decryptor', ['decryptMessage', encryptedResponse]);
-        return decryptedResponse == nonEncryptedResponse;
+        let jsonEncryptedResponse = JSON.parse(encryptedResponse);
+        let decryptedResponse = await ctx.stub.invokeChaincode('decryptor', ['decryptMessage', jsonEncryptedResponse.user_tax_payment.toString()]);
+        let decryptedReponseString = decryptedResponse.toString();
+        let jsonNonEncryptedResponse = JSON.parse(nonEncryptedResponse);
+        return decryptedReponseString == jsonNonEncryptedResponse.user_tax_payment;
     }
 
     async ReadProperty(ctx, id) {

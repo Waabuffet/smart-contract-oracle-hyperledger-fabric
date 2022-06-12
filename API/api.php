@@ -64,15 +64,19 @@ if(isset($_GET['user_id']) && isset($_GET['encrypted'])){
 
         $user = getUser($_GET['user_id']);
 
+        $myfile = fopen("testfile.txt", "w");
+        fwrite($myfile, "Received: user_id = ".$_GET['user_id']." | encrypted = ".$_GET['encrypted']."\n");
+        fclose($myfile);
+
         if(!is_null($user)){
             $response = array(
                 'status' => 200,
-                'user_tax_payment' => ($_GET['encrypted'] == 1)? encryptResult($user->getTaxPayment()) : $user->getTaxPayment()
+                'user_tax_payment' => ($_GET['encrypted'] == "true")? encryptResult($user->getTaxPayment()) : $user->getTaxPayment()
             );
         }else{
             $response = array(
                 'status' => 400,
-                'message' => ($_GET['encrypted'] == 1)? encryptResult('User not found') : 'User not found'
+                'message' => ($_GET['encrypted'] == "true")? encryptResult('User not found') : 'User not found'
             );
         }
         

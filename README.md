@@ -10,6 +10,7 @@
 - [Client Application](#client-application)
    - [Startup](#startup-2)
    - [Usage](#usage)
+- [Scripts](#scripts)
 
 # Components:
 - API
@@ -141,3 +142,8 @@ In that page, we first need to Initialize the leger using the upper button on th
 Click on the `Get All Properties` button to fetch the properties from the blockchain.
 You can test things by adding, editing and deleting properties.
 You can also transfer properties which will succeed only if the user has paid his taxes (check users table in [API](#users-present-in-tax-api)), or fail and show the error in a toast.
+
+# Scripts
+
+## Installation
+The two scripts inside the `scripts` directory should be copied to be at the same level as the `network.sh` script.
